@@ -40,7 +40,7 @@ app.use(function(req, res, next) {
 app.use(passport.initialize());
 
 
-// TODO: MOVE THIS
+// TODO: MOVE THIS, FIX ME
 // Create our Express router
 var router = express.Router();
 
@@ -49,10 +49,15 @@ router.route('/api/v1/users')
   .post(userService.postUsers)
   .get(authService.isAuthenticated, userService.getUsers);
 
+
+// Create endpoint handlers for /opinions
+router.route('/api/v1/opinions/user').get(authService.isAuthenticated, opinionService.getOpinionsByUser);
+
 // Create endpoint handlers for /opinions
 router.route('/api/v1/opinions')
-  .post(authService.isAuthenticated, opinionService.postOpinions)
-  .get(authService.isAuthenticated, opinionService.getOpinions);
+  .get(opinionService.getOpinions)
+  .post(authService.isAuthenticated, opinionService.postOpinions);
+
 
 // Create endpoint handlers for /opinions/:opinion_id
 router.route('/api/v1/opinions/:opinion_id')
@@ -62,6 +67,7 @@ router.route('/api/v1/opinions/:opinion_id')
 
 // Register all our routes
 app.use(router);
+
 
 // log
 app.use(function(err, req, res, next) {

@@ -1,4 +1,3 @@
-
 var User = require('./user');
 
 // Create endpoint /api/users for POST

@@ -1,4 +1,3 @@
-
 var Opinion = require('./opinion');
 
 // Create endpoint /api/opinions for POST
@@ -6,12 +5,6 @@ exports.postOpinions = function(req, res) {
   var opinion = new Opinion();
 
   opinion.txt = req.body.txt;
-
-  if (!opinion.txt) {
-    // TODO: handler errors
-    return res.json({ error: 'Add txt to opinion' });
-  }
-
   opinion.userId = req.user._id;
 
   // Save the opinion and check for errors
@@ -24,8 +17,18 @@ exports.postOpinions = function(req, res) {
   });
 };
 
-// Create endpoint /api/opinions for GET
+// Create endpoint /api/user/opinions for GET
 exports.getOpinions = function(req, res) {
+  Opinion.find({}, function(err, opinions) {
+    if (err) {
+      return res.send(err);
+    }
+    return res.json(opinions);
+  });
+};
+
+// Create endpoint /api/opinions/user for GET
+exports.getOpinionsByUser = function(req, res) {
   Opinion.find({ userId: req.user._id }, function(err, opinions) {
     if (err) {
       return res.send(err);
