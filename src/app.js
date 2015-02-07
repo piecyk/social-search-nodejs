@@ -49,16 +49,16 @@ var router = express.Router();
 
 
 var API_FOODILY_URI = 'https://api.foodily.com/v1';
+var API_EVRYTHNG_URI = 'http://api.evrythng.com';
+
 var request = require('superagent');
 
 function Ouaht2Token() {
   var self = this;
   self.token = null;
 
-  this.getToken = function(next) {
-    console.log("next = ", self.access_token);
-
-    if (this.token) {
+  this.getToken = function(next, refresh) {
+    if (self.token && !refresh) {
       console.log('we have it');
       next(self.token.access_token);
     } else {
@@ -81,8 +81,6 @@ var ouaht2Token = new Ouaht2Token();
 function getBeers(req, res) {
 
   ouaht2Token.getToken(function(access_token) {
-    console.log('access_token dupa = ', access_token);
-
     request.get(API_FOODILY_URI + "/beerLookup")
       .send({
         'zone': req.body.zone || 'EUR',
@@ -96,6 +94,9 @@ function getBeers(req, res) {
       .end(function(responce) {
         if (responce.error) {
           console.log('oh no ' + responce.error.message);
+          // TODO: i know :( just some nice pupy died...
+          ouaht2Token.getToken(null, true);
+          res.send(responce.error);
         } else {
           res.json(responce.body);
         }
@@ -108,8 +109,6 @@ function getBeers(req, res) {
 function getBeerPairings(req, res) {
 
   ouaht2Token.getToken(function(access_token) {
-    console.log('access_token dupa = ', access_token);
-
     request.get(API_FOODILY_URI + "/beerPairings")
       .send({
         'zone': req.body.zone || 'EUR',
@@ -123,6 +122,8 @@ function getBeerPairings(req, res) {
       .end(function(responce) {
         if (responce.error) {
           console.log('oh no ' + responce.error.message);
+          ouaht2Token.getToken(null, true);
+          res.send(responce.error);
         } else {
           res.json(responce.body);
         }
@@ -135,13 +136,13 @@ function getBeerPairings(req, res) {
 function getRecipesById(req, res) {
 
   ouaht2Token.getToken(function(access_token) {
-    console.log('access_token dupa = ', access_token);
-
     request.get(API_FOODILY_URI + "/recipes/" + req.params.id)
       .set("Authorization", "Bearer " + access_token)
       .end(function(responce) {
         if (responce.error) {
           console.log('oh no ' + responce.error.message);
+          ouaht2Token.getToken(null, true);
+          res.send(responce.error);
         } else {
           res.json(responce.body);
         }
@@ -149,6 +150,25 @@ function getRecipesById(req, res) {
   });
 
 };
+
+function getBeerFromImage(req, res) {
+
+  //req.body.image
+  request.get(API_EVRYTHNG_URI + "/")
+    .set("Authorization", "Token jj9t0dmTuPqkwgmVLO6HhbuIL3JIMtbs11GEkeu4zpG83wZJaBj384FOHYWHx1OcqgT0TYBioiXy0i3f")
+    .end(function(responce) {
+      if (responce.error) {
+        console.log('oh no ' + responce.error.message);
+        res.send(responce.error);
+      } else {
+
+        // TODO: add check for
+        // add name from responce and call getBeers
+        req.body.name = 'tyskie';
+        getBeers(req, res);
+      }
+    });
+}
 
 // endpoint /api/v1/beers for GET
 router.route('/api/v1/beers').get(getBeers);
@@ -158,6 +178,9 @@ router.route('/api/v1/beerPairings').get(getBeerPairings);
 
 // endpoint /api/v1/recipes/:id for GET
 router.route('/api/v1/recipes/:id').get(getRecipesById);
+
+// endpoint /api/v1/recipes/:id for GET
+router.route('/api/v1/beerFromImage').get(getBeerFromImage);
 
 
 
