@@ -45,13 +45,13 @@ app.use(passport.initialize());
 var router = express.Router();
 
 
-
-
+var Q = require('q');
+var _ = require('lodash');
+var request = require('superagent');
 
 var API_FOODILY_URI = 'https://api.foodily.com/v1';
 var API_EVRYTHNG_URI = 'http://api.evrythng.com';
 
-var request = require('superagent');
 
 function Ouaht2Token() {
   var self = this;
@@ -76,6 +76,83 @@ function Ouaht2Token() {
   };
 }
 var ouaht2Token = new Ouaht2Token();
+
+
+
+function getBeerPromise(params) {
+  var defer = Q.defer();
+
+  console.log('params = ', params);
+
+  ouaht2Token.getToken(function(access_token) {
+    request.get(API_FOODILY_URI + "/beerLookup")
+      .send({
+        'zone': params.zone || 'EUR',
+        'limit': params.limit || 50,
+        'offset': params.offset || 0,
+        'name': params.name,
+        'flavorProfile': params.flavorProfile,
+        'id': params.id
+      })
+      .set("Authorization", "Bearer " + access_token)
+      .end(function(responce) {
+        if (responce.error) {
+          // TODO: i know :( just some nice pupy died...
+          ouaht2Token.token = null;
+
+          defer.reject(responce.error);
+        } else {
+          defer.resolve(responce.body);
+        }
+      });
+  });
+
+  return defer.promise;
+}
+
+var _flavorProfiles = [
+  'green_hoppy',
+  'roasted_toasted',
+  'citrus_zesty',
+  'sour',
+  'spicy',
+  'fruity',
+  'toffee_caramel'
+];
+
+function getBeersByFlavorProfile(req, res) {
+
+  var allBeerPromise = _.map(req.body.flavorProfiles, function(flavorProfile) {
+    return getBeerPromise({'flavorProfile': flavorProfile});
+  });
+
+  Q.all(allBeerPromise).then(
+    function(response) {
+
+      res.json(_.reduce(response, function(result, el) {
+        result.count += el.count;
+        result.beers = result.beers.concat(_.map(el.beers, function(beer) {
+          return {
+            'id': beer.id,
+            'name': beer.name,
+            'imageUrl': beer.imageUrl,
+            'flavorProfile': beer.flavorProfile,
+            'glutenFree': beer.glutenFree
+          };
+        }));
+
+        return result;
+      }, {beers: [], count: 0}));
+
+    },
+    function(error) {
+      res.send(error);
+    });
+}
+
+// endpoint /api/v1/beers for GET
+router.route('/api/v1/beersFlavorProfiles').get(getBeersByFlavorProfile);
+
 
 
 function getBeers(req, res) {
@@ -115,8 +192,10 @@ function getBeerPairings(req, res) {
         'limit': req.body.limit || 50,
         'offset': req.body.offset || 0,
         'pairingType': req.body.pairingType || 'all',
-        'flavorProfile': req.body.flavorProfile,
-        'q': req.body.q
+        'flavorProfile': req.body.flavorProfile || 'spicy',
+        'q': req.body.q || 'beef',
+        'expand': 'recipePairings(recipes)',
+        'fields': '*(*),recipePairings(recipe(name,id,href,images(list(smallUrl))),pairings(*))'
       })
       .set("Authorization", "Bearer " + access_token)
       .end(function(responce) {
