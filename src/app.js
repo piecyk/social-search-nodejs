@@ -81,7 +81,6 @@ var ouaht2Token = new Ouaht2Token();
 
 function getBeerPromise(params) {
   var defer = Q.defer();
-
   console.log('params = ', params);
 
   ouaht2Token.getToken(function(access_token) {
@@ -122,11 +121,11 @@ var _flavorProfiles = [
 
 function getBeersByFlavorProfile(req, res) {
 
-  var allBeerPromise = _.map(req.body.flavorProfiles, function(flavorProfile) {
-    return getBeerPromise({'flavorProfile': flavorProfile});
+  var allPromise = _.map(req.body.flavorProfiles, function(flavorProfile) {
+    return getBeerPromise(flavorProfile);
   });
 
-  Q.all(allBeerPromise).then(
+  Q.all(allPromise).then(
     function(response) {
 
       res.json(_.reduce(response, function(result, el) {
@@ -150,8 +149,86 @@ function getBeersByFlavorProfile(req, res) {
     });
 }
 
+var _pairings = [{
+  'pairingType': 'all',
+  'q': 'rice',
+  'flavorProfile': 'spicy'
+}, {
+  'pairingType': 'all',
+  'q': 'beef',
+  'flavorProfile': 'spicy'
+}];
+
+function getPairingsPromise(params) {
+  var defer = Q.defer();
+  console.log('params = ', params);
+
+  ouaht2Token.getToken(function(access_token) {
+    request.get(API_FOODILY_URI + "/beerPairings")
+      .send({
+        'zone': params.zone || 'EUR',
+        'limit': params.limit || 50,
+        'offset': params.offset || 0,
+        'pairingType': params.pairingType || 'all',
+        'flavorProfile': params.flavorProfile,
+        'q': params.q,
+        'expand': 'recipePairings(recipes)',
+        'fields': '*(*),recipePairings(recipe(name,id,href,images(list(smallUrl))),pairings(*))'
+      })
+      .set("Authorization", "Bearer " + access_token)
+      .end(function(responce) {
+        if (responce.error) {
+          // TODO: i know :( just some nice pupy died...
+          ouaht2Token.token = null;
+
+          defer.reject(responce.error);
+        } else {
+          defer.resolve(responce.body);
+        }
+      });
+  });
+
+  return defer.promise;
+}
+
+function getPairingsByFlavorProfile(req, res) {
+
+  var allPromise = _.map(req.body.pairings || _pairings, function(pairing) {
+    return getPairingsPromise(pairing);
+  });
+
+  Q.all(allPromise).then(
+    function(response) {
+
+      res.json(_.reduce(response, function(result, el) {
+        //console.log(el);
+
+        result.count += el.count;
+        result.recipePairings = result.recipePairings.concat(_.map(el.recipePairings, function(recipePairing) {
+          //console.log(recipePairing);
+          //console.log(recipePairing.pairings);
+
+          return {
+            'id': recipePairing.recipe.id,
+            'name': recipePairing.recipe.name,
+            'href': recipePairing.recipe.href,
+            'imageUrl': recipePairing.recipe.images.list[0].smallUrl
+            ,'flavorProfile': el.flavorProfiles.length > 0 ? el.flavorProfiles[0].name : ''
+          };
+        }));
+
+        return result;
+      }, {recipePairings: [], count: 0}));
+
+    },
+    function(error) {
+      res.send(error);
+    });
+}
+
 // endpoint /api/v1/beers for GET
 router.route('/api/v1/beersFlavorProfiles').get(getBeersByFlavorProfile);
+router.route('/api/v1/pairingsFlavorProfiles').get(getPairingsByFlavorProfile);
 
 
 
@@ -232,11 +309,17 @@ function getRecipesById(req, res) {
 
 };
 
+//scan/recognitions?objpic=true
+//ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM
+//jj9t0dmTuPqkwgmVLO6HhbuIL3JIMtbs11GEkeu4zpG83wZJaBj384FOHYWHx1OcqgT0TYBioiXy0i3f
+
 function getBeerFromImage(req, res) {
 
   //req.body.image
-  request.get(API_EVRYTHNG_URI + "/")
+  request.get(API_EVRYTHNG_URI + "/scan/recognitions?objpic=true")
     .set("Authorization", "Token jj9t0dmTuPqkwgmVLO6HhbuIL3JIMtbs11GEkeu4zpG83wZJaBj384FOHYWHx1OcqgT0TYBioiXy0i3f")
+    .set('Accept', 'application/json')
+    .send({'image': 'test'})
     .end(function(responce) {
       if (responce.error) {
         console.log('oh no ' + responce.error.message);
