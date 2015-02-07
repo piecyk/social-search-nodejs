@@ -57,8 +57,8 @@ function Ouaht2Token() {
   var self = this;
   self.token = null;
 
-  this.getToken = function(next, refresh) {
-    if (self.token && !refresh) {
+  self.getToken = function(next) {
+    if (self.token) {
       console.log('we have it');
       next(self.token.access_token);
     } else {
@@ -93,9 +93,9 @@ function getBeers(req, res) {
       .set("Authorization", "Bearer " + access_token)
       .end(function(responce) {
         if (responce.error) {
-          console.log('oh no ' + responce.error.message);
           // TODO: i know :( just some nice pupy died...
-          ouaht2Token.getToken(null, true);
+          ouaht2Token.token = null;
+
           res.send(responce.error);
         } else {
           res.json(responce.body);
@@ -121,8 +121,9 @@ function getBeerPairings(req, res) {
       .set("Authorization", "Bearer " + access_token)
       .end(function(responce) {
         if (responce.error) {
-          console.log('oh no ' + responce.error.message);
-          ouaht2Token.getToken(null, true);
+          // TODO: i know :( just some nice pupy died...
+          ouaht2Token.token = null;
+
           res.send(responce.error);
         } else {
           res.json(responce.body);
@@ -140,8 +141,9 @@ function getRecipesById(req, res) {
       .set("Authorization", "Bearer " + access_token)
       .end(function(responce) {
         if (responce.error) {
-          console.log('oh no ' + responce.error.message);
-          ouaht2Token.getToken(null, true);
+          // TODO: i know :( just some nice pupy died...
+          ouaht2Token.token = null;
+
           res.send(responce.error);
         } else {
           res.json(responce.body);
