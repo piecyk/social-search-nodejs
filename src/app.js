@@ -105,8 +105,62 @@ function getBeers(req, res) {
 };
 
 
-// TODO: BEERS
+function getBeerPairings(req, res) {
+
+  ouaht2Token.getToken(function(access_token) {
+    console.log('access_token dupa = ', access_token);
+
+    request.get(API_FOODILY_URI + "/beerPairings")
+      .send({
+        'zone': req.body.zone || 'EUR',
+        'limit': req.body.limit || 50,
+        'offset': req.body.offset || 0,
+        'pairingType': req.body.pairingType || 'all',
+        'flavorProfile': req.body.flavorProfile,
+        'q': req.body.q
+      })
+      .set("Authorization", "Bearer " + access_token)
+      .end(function(responce) {
+        if (responce.error) {
+          console.log('oh no ' + responce.error.message);
+        } else {
+          res.json(responce.body);
+        }
+      });
+  });
+
+};
+
+
+function getRecipesById(req, res) {
+
+  ouaht2Token.getToken(function(access_token) {
+    console.log('access_token dupa = ', access_token);
+
+    request.get(API_FOODILY_URI + "/recipes/" + req.params.id)
+      .set("Authorization", "Bearer " + access_token)
+      .end(function(responce) {
+        if (responce.error) {
+          console.log('oh no ' + responce.error.message);
+        } else {
+          res.json(responce.body);
+        }
+      });
+  });
+
+};
+
+// endpoint /api/v1/beers for GET
 router.route('/api/v1/beers').get(getBeers);
+
+// endpoint /api/v1/beerPairings for GET
+router.route('/api/v1/beerPairings').get(getBeerPairings);
+
+// endpoint /api/v1/recipes/:id for GET
+router.route('/api/v1/recipes/:id').get(getRecipesById);
+
+
+
 
 
 
