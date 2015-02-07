@@ -44,6 +44,12 @@ app.use(passport.initialize());
 // Create our Express router
 var router = express.Router();
 
+
+// TODO: BEERS
+router.route('/api/v1/beers').get(opinionService.getBeer);
+
+
+
 // Create endpoint handlers for /users
 router.route('/api/v1/users')
   .post(userService.postUsers)
