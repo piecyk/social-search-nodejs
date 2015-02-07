@@ -45,8 +45,68 @@ app.use(passport.initialize());
 var router = express.Router();
 
 
+
+
+
+var API_FOODILY_URI = 'https://api.foodily.com/v1';
+var request = require('superagent');
+
+function Ouaht2Token() {
+  var self = this;
+  self.token = null;
+
+  this.getToken = function(next) {
+    console.log("next = ", self.access_token);
+
+    if (this.token) {
+      console.log('we have it');
+      next(self.token.access_token);
+    } else {
+      request.post(API_FOODILY_URI + "/token")
+        .set("Authorization", "Basic YWItNDpSYmI4NTdSb3F4Yk90R014")
+        .send("grant_type=client_credentials")
+        .end(function(responce) {
+
+          self.token = responce.body;
+          console.log('token = ', self.token);
+
+          next(self.token.access_token);
+        });
+    }
+  };
+}
+var ouaht2Token = new Ouaht2Token();
+
+
+function getBeers(req, res) {
+
+  ouaht2Token.getToken(function(access_token) {
+    console.log('access_token dupa = ', access_token);
+
+    request.get(API_FOODILY_URI + "/beerLookup")
+      .send({
+        'zone': req.body.zone || 'EUR',
+        'limit': req.body.limit || 50,
+        'offset': req.body.offset || 0,
+        'name': req.body.name,
+        'flavorProfile': req.body.flavorProfile,
+        'id': req.body.id
+      })
+      .set("Authorization", "Bearer " + access_token)
+      .end(function(responce) {
+        if (responce.error) {
+          console.log('oh no ' + responce.error.message);
+        } else {
+          res.json(responce.body);
+        }
+      });
+  });
+
+};
+
+
 // TODO: BEERS
-router.route('/api/v1/beers').get(opinionService.getBeer);
+router.route('/api/v1/beers').get(getBeers);
 
 
 
