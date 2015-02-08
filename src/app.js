@@ -313,7 +313,8 @@ router.route('/api/v1/pairingsFlavorProfiles').post(getPairingsByFlavorProfile);
 
 
 function getBeers(req, res) {
-
+  console.log("req.body = ", req.body);
+  
   ouaht2Token.getToken(function(access_token) {
     request.get(API_FOODILY_URI + "/beerLookup")
       .send({
@@ -332,6 +333,8 @@ function getBeers(req, res) {
 
           res.send(responce.error);
         } else {
+          console.log("responce.body = ", responce.body);
+  
           res.json(responce.body);
         }
       });
