@@ -407,7 +407,7 @@ function getBeerFromImage(req, res) {
         // add name from response and call getBeers
         console.log('response =', response.body);
 
-        request.get('https://api.evrythng.com/products/UBNgxKr8Pe5RpG6saEDdVCbh')
+        request.get(response.body.evrythngUrl)
           .set("Authorization", "ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM")
           .set('Accept', 'application/json')
           .set('Content-Type', 'application/json')
@@ -417,7 +417,8 @@ function getBeerFromImage(req, res) {
               res.send(response.error);
             } else {
               console.log('response =', response.body);
-              req.body.name = 'tyskie';
+              
+              req.body.name = response.body.description;
               getBeers(req, res);
             }
           });
