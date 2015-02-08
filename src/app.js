@@ -398,17 +398,18 @@ function getBeerFromImage(req, res) {
   //req.body.image
   request.post('https://api.evrythng.com/scan/recognitions?objpic=true')
     .set("Authorization", "ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM")
-    //.set('Accept', 'application/json')
+  //.set('Accept', 'application/json')
+    .send({'image': req.body})
     .set('Content-Type', 'application/json')
     .end(function(responce) {
       if (responce.error) {
         console.log('oh no ' + responce.error.message);
         res.send(responce.error);
       } else {
-
         // TODO: add check for
         // add name from responce and call getBeers
         req.body.name = 'tyskie';
+        console.log('responce =', responce);
         getBeers(req, res);
       }
     });
@@ -424,7 +425,7 @@ router.route('/api/v1/beerPairings').get(getBeerPairings);
 router.route('/api/v1/recipes/:id').get(getRecipesById);
 
 // endpoint /api/v1/recipes/:id for GET
-router.route('/api/v1/beerFromImage').get(getBeerFromImage);
+router.route('/api/v1/beerFromImage').post(getBeerFromImage);
 
 
 
