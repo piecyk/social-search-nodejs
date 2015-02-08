@@ -407,8 +407,21 @@ function getBeerFromImage(req, res) {
         // add name from response and call getBeers
         console.log('response =', response.body);
 
-        req.body.name = 'tyskie';
-        getBeers(req, res);
+        request.get('https://api.evrythng.com/products/UBNgxKr8Pe5RpG6saEDdVCbh')
+          .set("Authorization", "ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM")
+          .set('Accept', 'application/json')
+          .set('Content-Type', 'application/json')
+          .end(function(response) {
+            if (response.error) {
+              console.log('oh no ' + response.error.message);
+              res.send(response.error);
+            } else {
+              console.log('response =', response.body);
+              req.body.name = 'tyskie';
+              getBeers(req, res);
+            }
+          });
+
       }
     });
 }
