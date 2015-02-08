@@ -149,15 +149,6 @@ function getBeersByFlavorProfile(req, res) {
     });
 }
 
-var _pairings = [{
-  'pairingType': 'all',
-  'q': 'rice',
-  'flavorProfile': 'spicy'
-}, {
-  'pairingType': 'all',
-  'q': 'beef',
-  'flavorProfile': 'spicy'
-}];
 
 function getPairingsPromise(params) {
   var defer = Q.defer();
@@ -191,35 +182,125 @@ function getPairingsPromise(params) {
   return defer.promise;
 }
 
+function seniorPlakalJakKlepal(array) {
+  var resultArrayForIntersection = [];
+  var resultArray = [];
+  array.forEach(function(result) {
+    var pairingsArray = [];
+    _.each(result.recipePairings, function(pairing) {
+      pairingsArray.push(pairing.recipe.id);
+      resultArray.push({
+        'id': pairing.recipe.id,
+        'name': pairing.recipe.name,
+        'imageUrl': pairing.recipe.images.list[0].smallUrl,
+        'flavorProfile': result.flavorProfiles.length > 0 ? result.flavorProfiles[0].name : ''
+      });
+    });
+    resultArrayForIntersection.push(pairingsArray);
+  });
+
+  var _tmpArray = _.uniq(_.intersection(_.flatten(resultArrayForIntersection)));
+  console.log(_tmpArray.length);
+
+  return _.map(_tmpArray, function(id) {
+    return _.findWhere(resultArray, { 'id': id });
+  });
+}
+
+
+function seniorPlakalJakKlepalUnion(array) {
+  var resultArrayForIntersection = [];
+  var resultArray = [];
+  array.forEach(function(result) {
+    var pairingsArray = [];
+    _.each(result, function(recipe) {
+      pairingsArray.push(recipe.id);
+      resultArray.push(recipe);
+    });
+    resultArrayForIntersection.push(pairingsArray);
+  });
+
+  var _tmpArray = _.uniq(_.union(_.flatten(resultArrayForIntersection)));
+  console.log(_tmpArray.length);
+
+  return _.map(_tmpArray, function(id) {
+    return _.findWhere(resultArray, { 'id': id });
+  });
+}
+
+function resolvePairingsArray(promises) {
+  var defer = Q.defer();
+
+  console.log('promises =', promises);
+
+  Q.all(promises).then(
+    function(response) {
+
+      var ret = seniorPlakalJakKlepal(response);
+      defer.resolve(ret);
+
+    },
+    function(error) {
+      defer.reject(error);
+    });
+  return defer.promise;
+}
+
+
+
+var _pairings = {
+  'pairingType': 'all',
+  'mains': ['chicken', 'beef'],
+  'additionals': ['potato'],
+  'flavorProfiles': ['spicy']
+};
+
+
 function getPairingsByFlavorProfile(req, res) {
 
-  var allPromise = _.map(req.body.pairings || _pairings, function(pairing) {
-    return getPairingsPromise(pairing);
+  // var allPromise = _.map(_pairings.flavorProfiles, function(pairing) {
+  //   return getPairingsPromise(pairing);
+  // });
+  var allPromise = [];
+
+  _.each(_pairings.flavorProfiles, function(flavorProfile) {
+
+    var m = _.map(_pairings.mains, function(main) {
+      return {
+        'flavorProfile': flavorProfile,
+        'q': main,
+        'pairingType': _pairings.pairingType
+      };
+    });
+
+    //console.log('m = ', m);
+    var a = _.map(_pairings.additionals, function(additional) {
+      return {
+        'flavorProfile': flavorProfile,
+        'q': additional,
+        'pairingType': _pairings.pairingType
+      };
+    });
+
+    // ( (s c) & (s r) )  u   ((s b)  & (s r))
+    _.each(m, function(el) {
+      var promises = [el].concat(a);
+      console.log('promises = ', promises);
+
+      allPromise.push(resolvePairingsArray(_.map(promises, function(promise) {
+        return getPairingsPromise(promise);
+      })));
+
+    });
+
+    //console.log('a = ', a);
   });
+
+  //res.json({});
 
   Q.all(allPromise).then(
     function(response) {
-
-      res.json(_.reduce(response, function(result, el) {
-        //console.log(el);
-
-        result.count += el.count;
-        result.recipePairings = result.recipePairings.concat(_.map(el.recipePairings, function(recipePairing) {
-          //console.log(recipePairing);
-          //console.log(recipePairing.pairings);
-
-          return {
-            'id': recipePairing.recipe.id,
-            'name': recipePairing.recipe.name,
-            'href': recipePairing.recipe.href,
-            'imageUrl': recipePairing.recipe.images.list[0].smallUrl
-            ,'flavorProfile': el.flavorProfiles.length > 0 ? el.flavorProfiles[0].name : ''
-          };
-        }));
-
-        return result;
-      }, {recipePairings: [], count: 0}));
-
+      res.json(seniorPlakalJakKlepalUnion(response));
     },
     function(error) {
       res.send(error);
@@ -228,6 +309,7 @@ function getPairingsByFlavorProfile(req, res) {
 
 // endpoint /api/v1/beers for GET
 router.route('/api/v1/beersFlavorProfiles').post(getBeersByFlavorProfile);
+// todo get na postt
 router.route('/api/v1/pairingsFlavorProfiles').post(getPairingsByFlavorProfile);
 
 
