@@ -260,7 +260,7 @@ function getPairingsByFlavorProfile(req, res) {
 
   var allPromise = [];
 
-  _.each(req.body.pairings || _pairings.flavorProfiles, function(flavorProfile) {
+  _.each(req.body.pairings, function(flavorProfile) {
 
     var m = _.map(_pairings.mains, function(main) {
       return {
