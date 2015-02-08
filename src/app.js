@@ -401,7 +401,7 @@ function getBeerFromImage(req, res) {
     .set("Authorization", "ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM")
     .set('Accept', 'application/json')
     .set('Content-Type', 'application/json')
-    .send({'image': req.body})
+    .send({'image': 'data:image/jpeg;base64,' + req.body})
     .end(function(response) {
       if (response.error) {
         console.log('oh no ' + response.error.message);
