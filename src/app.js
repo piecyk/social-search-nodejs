@@ -258,12 +258,9 @@ var _pairings = {
 
 function getPairingsByFlavorProfile(req, res) {
 
-  // var allPromise = _.map(_pairings.flavorProfiles, function(pairing) {
-  //   return getPairingsPromise(pairing);
-  // });
   var allPromise = [];
 
-  _.each(_pairings.flavorProfiles, function(flavorProfile) {
+  _.each(req.body.pairings || _pairings.flavorProfiles, function(flavorProfile) {
 
     var m = _.map(_pairings.mains, function(main) {
       return {
