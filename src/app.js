@@ -209,7 +209,7 @@ function seniorPlakalJakKlepal(array) {
 
 
 function seniorPlakalJakKlepalUnion(array) {
-  var resultArrayForIntersection = [];
+  var resultArrayFor = [];
   var resultArray = [];
   array.forEach(function(result) {
     var pairingsArray = [];
@@ -217,10 +217,10 @@ function seniorPlakalJakKlepalUnion(array) {
       pairingsArray.push(recipe.id);
       resultArray.push(recipe);
     });
-    resultArrayForIntersection.push(pairingsArray);
+    resultArrayFor.push(pairingsArray);
   });
 
-  var _tmpArray = _.uniq(_.union(_.flatten(resultArrayForIntersection)));
+  var _tmpArray = _.union(_.flatten(resultArrayFor));
   console.log(_tmpArray.length);
 
   return _.map(_tmpArray, function(id) {
@@ -298,7 +298,7 @@ function getPairingsByFlavorProfile(req, res) {
 
   Q.all(allPromise).then(
     function(response) {
-      res.json(seniorPlakalJakKlepalUnion(response));
+      res.json(seniorPlakalJakKlepalUnion(response).slice(0, 50));
     },
     function(error) {
       res.send(error);
