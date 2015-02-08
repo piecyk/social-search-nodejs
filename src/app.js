@@ -389,20 +389,14 @@ function getRecipesById(req, res) {
 
 };
 
-//scan/recognitions?objpic=true
-//ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM
-//jj9t0dmTuPqkwgmVLO6HhbuIL3JIMtbs11GEkeu4zpG83wZJaBj384FOHYWHx1OcqgT0TYBioiXy0i3f
 
 function getBeerFromImage(req, res) {
-  console.log('image = ', req.body.image);
 
   //req.body.image
   request.post('https://api.evrythng.com/scan/recognitions?objpic=true')
     .set("Authorization", "ohg2l87RnqsijqKIfTR5nSfSFqAFisDZkkZFgHxwdP1vwZAS9JHiU8BE06EJ69os5zRauMiUofcXATIM")
     .set('Accept', 'application/json')
     .set('Content-Type', 'application/json')
-  //.send({'image': 'data:image/jpeg;base64,' + req.body})
-
     .send({'image': 'data:image/jpeg;base64,' + req.body.image})
     .end(function(response) {
       if (response.error) {
@@ -411,7 +405,8 @@ function getBeerFromImage(req, res) {
       } else {
         // TODO: add check for
         // add name from response and call getBeers
-        console.log('response =', response);
+        console.log('response =', response.body);
+
         req.body.name = 'tyskie';
         getBeers(req, res);
       }
