@@ -248,19 +248,20 @@ function resolvePairingsArray(promises) {
 
 
 
-var _pairings = {
-  'pairingType': 'all',
-  'mains': ['chicken', 'beef'],
-  'additionals': ['potato'],
-  'flavorProfiles': ['spicy']
-};
+// var _pairings = {
+//   'pairingType': 'all',
+//   'mains': ['chicken', 'beef'],
+//   'additionals': ['potato'],
+//   'flavorProfiles': ['spicy']
+// };
 
 
 function getPairingsByFlavorProfile(req, res) {
 
+  var _pairings = req.body.pairings;
   var allPromise = [];
 
-  _.each(req.body.pairings, function(flavorProfile) {
+  _.each(_pairings.flavorProfiles, function(flavorProfile) {
 
     var m = _.map(_pairings.mains, function(main) {
       return {
